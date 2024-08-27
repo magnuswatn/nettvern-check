@@ -65,6 +65,17 @@ func checkNettvern(domain string) (bool, error) {
 				slog.Debug("Got non-success code", "domain", domain, "server", server, "rcode", dns.RcodeToString[r.Rcode])
 				return false, nil
 			}
+			didGoogleReturnSameError, err := verifyResponseWithGoogle(domain, r.Rcode)
+			if err != nil {
+				slog.Warn("Got non-success response from Telenor, and failed to verify against Google",
+					"domain", domain, "server", server, "err", err, "googleErr", err)
+				continue
+			}
+			if didGoogleReturnSameError {
+				slog.Info("Got non-success code, but verified against Google",
+					"domain", domain, "server", server, "rcode", dns.RcodeToString[r.Rcode])
+				return false, nil
+			}
 			slog.Warn("Got non-success code", "domain", domain, "server", server, "rcode", dns.RcodeToString[r.Rcode])
 			continue
 		}
@@ -79,4 +90,15 @@ func checkNettvern(domain string) (bool, error) {
 	}
 
 	return false, fmt.Errorf("query failed against all DNS servers")
+}
+
+func verifyResponseWithGoogle(domain string, rcode int) (bool, error) {
+	c := new(dns.Client)
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(domain), dns.TypeCNAME)
+	r, _, err := c.Exchange(m, "8.8.8.8:53")
+	if err != nil {
+		return false, err
+	}
+	return r.Rcode == rcode, nil
 }
