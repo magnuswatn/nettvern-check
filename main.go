@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/miekg/dns"
 )
@@ -51,7 +52,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 func checkNettvern(domain string) (bool, error) {
 
 	for _, server := range dnsServers {
-		c := new(dns.Client)
+		c := dns.Client{Timeout: time.Second * 5}
 		m := new(dns.Msg)
 		m.SetQuestion(dns.Fqdn(domain), dns.TypeCNAME)
 		r, _, err := c.Exchange(m, server)
