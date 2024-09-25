@@ -52,7 +52,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 func checkNettvern(domain string) (bool, error) {
 
 	for _, server := range dnsServers {
-		c := dns.Client{Timeout: time.Second * 5}
+		c := dns.Client{Timeout: time.Second * 7}
 		m := new(dns.Msg)
 		m.SetQuestion(dns.Fqdn(domain), dns.TypeCNAME)
 		r, _, err := c.Exchange(m, server)
